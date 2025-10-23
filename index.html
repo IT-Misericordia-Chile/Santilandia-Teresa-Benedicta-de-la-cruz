@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Contrôle du Jeu AR</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>🔥 Jeu AR - Lancement</h1>
+    <button onclick="startGame()">🚦 Démarrer la partie</button>
+
+    <button onclick="pauseGame()">Pause</button>
+
+    <h2>👥 Joueurs connectés :</h2>
+    <ul id="playerList"></ul>
+
+    <script>
+      const socket = io("http://localhost:3000");
+
+      socket.on("players_update", (players) => {
+        const list = document.getElementById("playerList");
+        list.innerHTML = "";
+        for (let id in players) {
+          const li = document.createElement("li");
+          li.innerText = `${players[id].name} - ${
+            players[id].time ? players[id].time + " ms" : "En course..."
+          }`;
+          list.appendChild(li);
+        }
+      });
+
+      function startGame() {
+        socket.emit("start_game");
+      }
+
+      function pausetGame() {
+        socket.emit("pause_game");
+      }
+    </script>
+  </body>
+</html>
