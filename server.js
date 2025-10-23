@@ -36,10 +36,14 @@ io.on("connection", (socket) => {
     io.emit("game_paused", Date.now());
   });
 
+    socket.on("scoring", () => {
+      console.log("Player scored :",  players[socket.id])
+  });
+
   socket.on("disconnect", () => {
     delete players[socket.id];
     io.emit("players_update", players);
   });
 });
 
-server.listen(3000, () => console.log("✅ Server running on port 3000"));
+server.listen(3000, '0.0.0.0', () => console.log("✅ Server running on port 3000, ouvert au usages externes"));
