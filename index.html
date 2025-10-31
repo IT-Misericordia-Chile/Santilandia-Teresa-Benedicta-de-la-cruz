@@ -3,37 +3,156 @@
   <head>
     <title>Contrôle du Jeu AR</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  </head>
-  <body>
-    <h1>🔥 Jeu AR - Lancement</h1>
-    <button onclick="startGame()">🚦 Démarrer la partie</button>
-
-    <button onclick="pauseGame()">Pause</button>
-
-    <h2>👥 Joueurs connectés :</h2>
-    <ul id="playerList"></ul>
-
-    <script>
-      const socket = io("http://localhost:3000");
-
-      socket.on("players_update", (players) => {
-        const list = document.getElementById("playerList");
-        list.innerHTML = "";
-        for (let id in players) {
-          const li = document.createElement("li");
-          li.innerText = `${players[id].name} - ${
-            players[id].time ? players[id].time + " ms" : "En course..."
-          }`;
-          list.appendChild(li);
-        }
-      });
-
-      function startGame() {
-        socket.emit("start_game");
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #222, #444);
+        color: white;
+        text-align: center;
+        padding: 20px;
       }
 
-      function pausetGame() {
-        socket.emit("pause_game");
+      h1 {
+        font-size: 2em;
+      }
+
+      .buttons {
+        margin: 20px 0;
+      }
+
+      button {
+        background: #ff9800;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        font-size: 1em;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 5px;
+      }
+
+      button:hover {
+        background: #ffa733;
+      }
+
+      .players {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 40px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+
+      .player-card {
+        width: 280px;
+        background: #333;
+        border: 3px solid #ff9800;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+      }
+
+      .player-name {
+        font-weight: bold;
+        font-size: 1.4em;
+        margin-bottom: 8px;
+      }
+
+      .player-score {
+        font-size: 1.3em;
+        margin: 8px 0;
+      }
+
+      .score-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .player-status {
+        font-size: 0.9em;
+        color: #ccc;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔥 Santilandia 🔥</h1>
+
+    <div class="buttons">
+      <button onclick="startNewGame()">Nueva partida</button>
+    </div>
+
+    <h2>👥 Joueurs connectés :</h2>
+    <div class="players">
+      <div id="player1" class="player-card">
+        <div class="player-name">En attente...</div>
+        <div class="player-score"></div>
+        <div class="score-buttons"></div>
+        <div class="player-status">-</div>
+      </div>
+      <div id="player2" class="player-card">
+        <div class="player-name">En attente...</div>
+        <div class="player-score"></div>
+        <div class="score-buttons"></div>
+        <div class="player-status">-</div>
+      </div>
+    </div>
+
+    <script>
+      const socket = io("http://192.168.1.167:3000");
+      let userId = "";
+
+      socket.on("connectedId", (id) => {
+        userId = id;
+      });
+
+      // Réception des joueurs
+      socket.on("players_update", (players) => {
+        const filtered = Object.values(players).filter((p) => p.name !== userId);
+
+        const card1 = document.getElementById("player1");
+        const card2 = document.getElementById("player2");
+        const cards = [card1, card2];
+
+        // Réinitialise toutes les cartes
+        cards.forEach((card) => {
+          card.querySelector(".player-name").innerText = "En attente...";
+          card.querySelector(".player-score").innerText = "";
+          card.querySelector(".player-status").innerText = "-";
+          card.querySelector(".score-buttons").innerHTML = "";
+        });
+
+        // Affiche les joueurs connectés
+        [filtered[0], filtered[1]].forEach((player, i) => {
+          if (player) {
+            const card = cards[i];
+            card.querySelector(".player-name").innerText = player.name;
+            card.querySelector(".player-score").innerText = "Score : " + player.score;
+            card.querySelector(".player-status").innerText = player.time ? `${player.time} ms` : "";
+
+            // Ajoute les boutons d’action
+            const btnContainer = card.querySelector(".score-buttons");
+            btnContainer.innerHTML = `
+              <button onclick="updateScore('${player.name}', ${player.score + 1})">+1</button>
+              <button onclick="updateScore('${player.name}', ${player.score - 1})">-1</button>
+              <button onclick="updateScore('${player.name}', 0)">Reset</button>
+            `;
+          }
+        });
+      });
+
+      function startNewGame() {
+        socket.emit("new_game");
+      }
+
+      function updateScore(playerId, newScore) {
+        socket.emit("update_scoring", playerId, newScore);
       }
     </script>
   </body>

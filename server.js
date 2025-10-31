@@ -15,30 +15,27 @@ let players = {};
 
 io.on("connection", (socket) => {
   console.log("✅ Player connected:", socket.id);
+  socket.emit("connectedId", socket.id);
+  players[socket.id] = { name: socket.id, score: 0 };
+  io.emit("players_update", players);
 
-  socket.on("register", (playerName) => {
-    players[socket.id] = { name: playerName, time: null };
-    io.emit("players_update", players);
-  });
-
-  socket.on("player_finished", (time) => {
-    players[socket.id].time = time;
-    io.emit("players_update", players);
-  });
-
-  socket.on("start_game", () => {
-    console.log("🚦 Start signal sent");
-    io.emit("game_started", Date.now());
-  });
-
-  socket.on("pause_game", () => {
-    console.log("PAUSE signal sent");
-    io.emit("game_paused", Date.now());
+  socket.on("new_game",() => {
+   for (const playerId in players) {
+    players[playerId].score = 0;
+  }
+    io.emit("new_game_activated");
   });
 
     socket.on("scoring", () => {
-      console.log("Player scored :",  players[socket.id])
+      players[socket.id].score += 1;
+      io.emit("players_update", players);
   });
+
+   socket.on("update_scoring", (playerId, score) => {
+      players[playerId].score = score;
+      io.emit("players_update", players);
+  });
+
 
   socket.on("disconnect", () => {
     delete players[socket.id];
